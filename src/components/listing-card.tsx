@@ -1,9 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Card, PressableFeedback, Typography } from "heroui-native";
+import { View } from "react-native";
 import { Listing } from "@/domain";
 import { formatDate } from "@/format";
-import { palette, spacing } from "@/theme";
 import { KindBadge, StatusBadge } from "./kind-badge";
-import { Surface } from "./surface";
 
 export function ListingCard({
   listing,
@@ -15,57 +14,47 @@ export function ListingCard({
   const lost = listing.kind === "LOST";
 
   return (
-    <Pressable
-      accessibilityRole="button"
+    <PressableFeedback
       accessibilityLabel={`${lost ? "Lost" : "Found"} ${listing.title}`}
+      accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => pressed && styles.pressed}
     >
-      <Surface style={styles.card}>
-        <View style={[styles.glyph, { backgroundColor: lost ? palette.lostSoft : palette.foundSoft }]}>
-          <Text style={[styles.glyphText, { color: lost ? palette.lost : palette.found }]}>
+      <Card className="flex-row gap-3">
+        <View
+          className={`size-12 items-center justify-center rounded-2xl ${
+            lost ? "bg-warning-soft" : "bg-success-soft"
+          }`}
+        >
+          <Typography
+            className={lost ? "text-warning-soft-foreground" : "text-success-soft-foreground"}
+            type="h5"
+            weight="bold"
+          >
             {lost ? "L" : "F"}
-          </Text>
+          </Typography>
         </View>
-        <View style={styles.body}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title} numberOfLines={1}>
+        <View className="flex-1 gap-1">
+          <View className="flex-row items-center gap-2">
+            <Typography className="flex-1" truncate type="h6">
               {listing.title}
-            </Text>
+            </Typography>
             <KindBadge kind={listing.kind} />
           </View>
-          <Text style={styles.meta} numberOfLines={1}>
+          <Typography color="muted" type="body-xs" weight="semibold">
             {listing.category} · {listing.zone}
-          </Text>
-          <Text style={styles.description} numberOfLines={2}>
+          </Typography>
+          <Typography color="muted" numberOfLines={2} type="body-sm">
             {listing.description}
-          </Text>
-          <View style={styles.footer}>
-            <Text style={styles.date}>{formatDate(listing.date)}</Text>
+          </Typography>
+          <View className="mt-1 flex-row items-center gap-2">
+            <Typography className="flex-1" color="muted" type="body-xs">
+              {formatDate(listing.date)}
+            </Typography>
             <StatusBadge status={listing.status} />
           </View>
         </View>
-      </Surface>
-    </Pressable>
+      </Card>
+      <PressableFeedback.Highlight className="rounded-3xl" />
+    </PressableFeedback>
   );
 }
-
-const styles = StyleSheet.create({
-  pressed: { opacity: 0.88 },
-  card: { flexDirection: "row", gap: spacing.md },
-  glyph: {
-    alignItems: "center",
-    borderRadius: 18,
-    height: 48,
-    justifyContent: "center",
-    width: 48,
-  },
-  glyphText: { fontSize: 19, fontWeight: "800" },
-  body: { flex: 1, gap: spacing.xs },
-  titleRow: { alignItems: "center", flexDirection: "row", gap: spacing.sm },
-  title: { color: palette.ink, flex: 1, fontSize: 17, fontWeight: "700", letterSpacing: -0.2 },
-  meta: { color: palette.muted, fontSize: 13, fontWeight: "600" },
-  description: { color: palette.body, fontSize: 14, lineHeight: 20 },
-  footer: { alignItems: "center", flexDirection: "row", gap: spacing.sm, marginTop: spacing.xs },
-  date: { color: palette.muted, flex: 1, fontSize: 12, fontWeight: "600" },
-});

@@ -1,20 +1,13 @@
 import * as Haptics from "expo-haptics";
 import { Redirect } from "expo-router";
+import { Alert, Typography } from "heroui-native";
 import { useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 import { ApiError, login, register } from "@/api";
 import { Button } from "@/components/button";
 import { Chip } from "@/components/chip";
 import { TextField } from "@/components/text-field";
 import { useAuth } from "@/providers/auth";
-import { palette, radius, spacing } from "@/theme";
 
 type Mode = "LOGIN" | "REGISTER";
 
@@ -70,29 +63,47 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.screen}
+      className="flex-1 bg-background"
     >
       <ScrollView
+        contentContainerClassName="flex-grow justify-center gap-4 p-6"
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.content}
       >
-        <View style={styles.brandMark}>
-          <Text style={styles.brandText}>SC</Text>
+        <View className="mb-2 size-14 items-center justify-center rounded-2xl bg-accent">
+          <Typography className="text-accent-foreground" type="h5" weight="bold">
+            SC
+          </Typography>
         </View>
-        <Text style={styles.eyebrow}>SMART CAMPUS</Text>
-        <Text style={styles.title}>
+        <Typography className="uppercase tracking-widest text-accent" type="body-xs" weight="bold">
+          Smart campus
+        </Typography>
+        <Typography type="h1" weight="bold">
           {mode === "LOGIN" ? "Welcome back." : "Join the campus."}
-        </Text>
-        <Text style={styles.subtitle}>
+        </Typography>
+        <Typography color="muted" type="body">
           {mode === "LOGIN"
             ? "Sign in to report lost items, follow matches, and claim what is yours."
             : "Create an account with your university email to start reporting."}
-        </Text>
+        </Typography>
 
-        <View style={styles.modeRow}>
-          <Chip label="Sign in" selected={mode === "LOGIN"} onPress={() => { setMode("LOGIN"); setError(""); }} />
-          <Chip label="Create account" selected={mode === "REGISTER"} onPress={() => { setMode("REGISTER"); setError(""); }} />
+        <View className="my-2 flex-row gap-2">
+          <Chip
+            label="Sign in"
+            onPress={() => {
+              setMode("LOGIN");
+              setError("");
+            }}
+            selected={mode === "LOGIN"}
+          />
+          <Chip
+            label="Create account"
+            onPress={() => {
+              setMode("REGISTER");
+              setError("");
+            }}
+            selected={mode === "REGISTER"}
+          />
         </View>
 
         {mode === "REGISTER" ? (
@@ -123,49 +134,24 @@ export default function LoginScreen() {
           value={password}
         />
 
-        {error ? <Text selectable style={styles.error}>{error}</Text> : null}
+        {error ? (
+          <Alert status="danger">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>{error}</Alert.Title>
+            </Alert.Content>
+          </Alert>
+        ) : null}
 
         <Button
           disabled={saving}
           label={saving ? "Connecting…" : mode === "LOGIN" ? "Sign in" : "Create account"}
           onPress={submit}
         />
-        <Text style={styles.note}>
-          Lost & found for the Institute of Technology, University of Moratuwa.
-        </Text>
+        <Typography align="center" className="mt-2" color="muted" type="body-xs">
+          Lost &amp; found for the Institute of Technology, University of Moratuwa.
+        </Typography>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { backgroundColor: palette.background, flex: 1 },
-  content: {
-    flexGrow: 1,
-    gap: spacing.md,
-    justifyContent: "center",
-    padding: spacing.lg,
-  },
-  brandMark: {
-    alignItems: "center",
-    backgroundColor: palette.accent,
-    borderRadius: radius.md,
-    height: 56,
-    justifyContent: "center",
-    marginBottom: spacing.sm,
-    width: 56,
-  },
-  brandText: { color: palette.white, fontSize: 20, fontWeight: "800", letterSpacing: 0.5 },
-  eyebrow: { color: palette.accent, fontSize: 12, fontWeight: "800", letterSpacing: 1.6 },
-  title: { color: palette.ink, fontSize: 34, fontWeight: "800", letterSpacing: -0.9 },
-  subtitle: { color: palette.body, fontSize: 16, lineHeight: 23 },
-  modeRow: { flexDirection: "row", gap: spacing.sm, marginVertical: spacing.sm },
-  error: { color: palette.danger, fontSize: 14, lineHeight: 20 },
-  note: {
-    color: palette.muted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: spacing.sm,
-    textAlign: "center",
-  },
-});

@@ -1,18 +1,21 @@
 import { router } from "expo-router";
+import { useThemeColor, Typography } from "heroui-native";
 import { useState } from "react";
-import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { FlatList, RefreshControl, View } from "react-native";
 import { Button } from "@/components/button";
 import { Chip } from "@/components/chip";
 import { EmptyState } from "@/components/empty-state";
 import { Hero } from "@/components/hero";
 import { ListingCard } from "@/components/listing-card";
-import { Listing, ListingKind } from "@/domain";
+import { Listing } from "@/domain";
 import { useData } from "@/providers/data";
-import { palette, spacing } from "@/theme";
+
+const filters = ["ALL", "LOST", "FOUND"] as const;
 
 export default function BrowseScreen() {
   const { listings, loading, error, refresh } = useData();
-  const [filter, setFilter] = useState<"ALL" | ListingKind>("ALL");
+  const [filter, setFilter] = useState<(typeof filters)[number]>("ALL");
+  const accent = useThemeColor("accent");
   const visible = listings.filter((listing) => filter === "ALL" || listing.kind === filter);
 
   function open(listing: Listing) {
@@ -21,27 +24,28 @@ export default function BrowseScreen() {
 
   return (
     <FlatList
+      className="flex-1 bg-background"
+      contentContainerClassName="px-4 pb-12"
       contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={styles.content}
       data={visible}
       keyExtractor={(item) => item.id}
       refreshControl={
         <RefreshControl
           onRefresh={() => void refresh()}
           refreshing={loading}
-          tintColor={palette.accent}
+          tintColor={accent}
         />
       }
       ListHeaderComponent={
-        <View style={styles.header}>
+        <View className="gap-4 pb-4">
           <Hero
-            eyebrow="SMART CAMPUS"
+            eyebrow="Smart campus"
             subtitle="Browse verified campus reports and help return items to their owners."
             title="Find what matters."
           />
           <Button label="Report an item" onPress={() => router.push("/report")} />
-          <View style={styles.chips}>
-            {(["ALL", "LOST", "FOUND"] as const).map((value) => (
+          <View className="flex-row gap-2">
+            {filters.map((value) => (
               <Chip
                 key={value}
                 label={value === "ALL" ? "All reports" : value}
@@ -50,14 +54,16 @@ export default function BrowseScreen() {
               />
             ))}
           </View>
-          <Text style={styles.sectionTitle}>Recent reports</Text>
+          <Typography type="h5">Recent reports</Typography>
         </View>
       }
       renderItem={({ item }) => <ListingCard listing={item} onPress={() => open(item)} />}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      ItemSeparatorComponent={() => <View className="h-2" />}
       ListEmptyComponent={
         loading ? (
-          <Text style={styles.note}>Loading the latest campus reports…</Text>
+          <Typography align="center" color="muted" className="py-6" type="body-sm">
+            Loading the latest campus reports…
+          </Typography>
         ) : error ? (
           <EmptyState message={error} title="Could not load reports" />
         ) : (
@@ -70,18 +76,3 @@ export default function BrowseScreen() {
     />
   );
 }
-
-const styles = StyleSheet.create({
-  content: { paddingHorizontal: spacing.md, paddingBottom: spacing.xxl },
-  header: { gap: spacing.md, paddingBottom: spacing.md },
-  chips: { flexDirection: "row", gap: spacing.sm },
-  sectionTitle: {
-    color: palette.ink,
-    fontSize: 19,
-    fontWeight: "800",
-    letterSpacing: -0.3,
-    marginTop: spacing.xs,
-  },
-  separator: { height: spacing.sm },
-  note: { color: palette.muted, fontSize: 14, paddingVertical: spacing.lg, textAlign: "center" },
-});

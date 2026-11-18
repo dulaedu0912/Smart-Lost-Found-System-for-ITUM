@@ -1,60 +1,80 @@
-import { Stack } from "expo-router";
-import { DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
+import "../../global.css";
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, View } from "react-native";
+import { HeroUINativeProvider, Spinner, useThemeColor } from "heroui-native";
+import { useMemo } from "react";
+import { View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useUniwind } from "uniwind";
 import { AuthProvider, useAuth } from "@/providers/auth";
 import { DataProvider } from "@/providers/data";
-import { palette } from "@/theme";
-
-const theme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: palette.accent,
-    background: palette.background,
-    card: palette.surface,
-    text: palette.ink,
-    border: palette.border,
-  },
-};
 
 function RootNavigator() {
   const { restoring } = useAuth();
+  const { theme } = useUniwind();
+  const [background, surface, foreground, border, accent] = useThemeColor([
+    "background",
+    "surface",
+    "foreground",
+    "border",
+    "accent",
+  ]);
+
+  const base = theme === "dark" ? DarkTheme : DefaultTheme;
+  const navigationTheme = useMemo(
+    () => ({
+      ...base,
+      colors: {
+        ...base.colors,
+        primary: accent,
+        background,
+        card: surface,
+        text: foreground,
+        border,
+        notification: accent,
+      },
+    }),
+    [base, accent, background, surface, foreground, border],
+  );
 
   if (restoring) {
     return (
-      <View style={{ alignItems: "center", backgroundColor: palette.background, flex: 1, justifyContent: "center" }}>
-        <ActivityIndicator color={palette.accent} />
+      <View className="flex-1 items-center justify-center bg-background">
+        <Spinner />
       </View>
     );
   }
 
   return (
-    <Stack
-      screenOptions={{
-        contentStyle: { backgroundColor: palette.background },
-        headerBackButtonDisplayMode: "minimal",
-        headerShadowVisible: false,
-        headerTintColor: palette.accent,
-        headerTitleStyle: { color: palette.ink, fontWeight: "700" },
-      }}
-    >
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="listing/[id]" options={{ title: "Report" }} />
-    </Stack>
+    <ThemeProvider value={navigationTheme}>
+      <StatusBar style={theme === "dark" ? "light" : "dark"} />
+      <Stack
+        screenOptions={{
+          contentStyle: { backgroundColor: background },
+          headerBackButtonDisplayMode: "minimal",
+          headerShadowVisible: false,
+          headerTintColor: accent,
+          headerTitleStyle: { color: foreground, fontWeight: "600" },
+        }}
+      >
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="listing/[id]" options={{ title: "Report" }} />
+      </Stack>
+    </ThemeProvider>
   );
 }
 
 export default function RootLayout() {
   return (
-    <ThemeProvider value={theme}>
-      <AuthProvider>
-        <DataProvider>
-          <StatusBar style="dark" />
-          <RootNavigator />
-        </DataProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <HeroUINativeProvider>
+        <AuthProvider>
+          <DataProvider>
+            <RootNavigator />
+          </DataProvider>
+        </AuthProvider>
+      </HeroUINativeProvider>
+    </GestureHandlerRootView>
   );
 }

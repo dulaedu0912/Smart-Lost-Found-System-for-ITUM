@@ -7,4 +7,9 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
+  {
+    // Uniwind's CSS entry is resolved by Metro, not by the import resolver.
+    files: ['src/app/_layout.tsx'],
+    rules: { 'import/no-unresolved': 'off' },
+  },
 ]);

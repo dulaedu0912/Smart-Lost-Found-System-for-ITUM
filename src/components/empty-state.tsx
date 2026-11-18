@@ -1,36 +1,16 @@
-import { StyleSheet, Text, View } from "react-native";
-import { palette, spacing } from "@/theme";
+import { Typography } from "heroui-native";
+import { View } from "react-native";
 
 export function EmptyState({ title, message }: { title: string; message: string }) {
   return (
-    <View style={styles.container}>
-      <View style={styles.mark} />
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.message}>{message}</Text>
+    <View className="items-center gap-2 px-6 py-12">
+      <View className="mb-2 h-1.5 w-11 rounded-full bg-accent-soft" />
+      <Typography align="center" type="h5">
+        {title}
+      </Typography>
+      <Typography align="center" className="max-w-72" color="muted" type="body-sm">
+        {message}
+      </Typography>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xxl,
-  },
-  mark: {
-    backgroundColor: palette.accentSoft,
-    borderRadius: 14,
-    height: 6,
-    marginBottom: spacing.sm,
-    width: 44,
-  },
-  title: { color: palette.ink, fontSize: 18, fontWeight: "800", textAlign: "center" },
-  message: {
-    color: palette.muted,
-    fontSize: 14,
-    lineHeight: 21,
-    maxWidth: 300,
-    textAlign: "center",
-  },
-});

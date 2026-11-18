@@ -1,17 +1,18 @@
 import { Redirect } from "expo-router";
 import { NativeTabs } from "expo-router/native-tabs";
+import { useThemeColor } from "heroui-native";
 import { useAuth } from "@/providers/auth";
 import { useData } from "@/providers/data";
-import { palette } from "@/theme";
 
 export default function TabsLayout() {
   const { user } = useAuth();
   const { matches } = useData();
+  const accent = useThemeColor("accent");
 
   if (!user) return <Redirect href="/login" />;
 
   return (
-    <NativeTabs tintColor={palette.accent}>
+    <NativeTabs tintColor={accent}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Icon sf="square.grid.2x2.fill" md="grid_view" />
         <NativeTabs.Trigger.Label>Browse</NativeTabs.Trigger.Label>

@@ -1,11 +1,10 @@
 import { router } from "expo-router";
-import { StyleSheet, View } from "react-native";
 import { EmptyState } from "@/components/empty-state";
 import { Hero } from "@/components/hero";
 import { MatchCard } from "@/components/match-card";
 import { Page } from "@/components/page";
 import { useData } from "@/providers/data";
-import { spacing } from "@/theme";
+import { View } from "react-native";
 
 export default function AlertsScreen() {
   const { listings, matches, loading, error } = useData();
@@ -18,7 +17,7 @@ export default function AlertsScreen() {
   return (
     <Page>
       <Hero
-        eyebrow="MATCH CENTRE"
+        eyebrow="Match centre"
         subtitle="Ranked by category, zone, date, and description similarity."
         title="Useful leads."
       />
@@ -32,7 +31,7 @@ export default function AlertsScreen() {
           title={loading ? "Checking matches" : "No strong matches yet"}
         />
       ) : (
-        <View style={styles.list}>
+        <View className="gap-2">
           {leads.map(({ match, listing }) => (
             <MatchCard
               key={match.id}
@@ -48,7 +47,3 @@ export default function AlertsScreen() {
     </Page>
   );
 }
-
-const styles = StyleSheet.create({
-  list: { gap: spacing.sm },
-});

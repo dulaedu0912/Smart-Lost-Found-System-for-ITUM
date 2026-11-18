@@ -1,10 +1,16 @@
 import { Redirect, Tabs } from "expo-router";
+import { useThemeColor } from "heroui-native";
 import { useAuth } from "@/providers/auth";
-import { palette } from "@/theme";
 
 // NativeTabs have no web implementation; web uses the JavaScript tabs.
 export default function TabsLayout() {
   const { user } = useAuth();
+  const [accent, muted, surface, border] = useThemeColor([
+    "accent",
+    "muted",
+    "surface",
+    "border",
+  ]);
 
   if (!user) return <Redirect href="/login" />;
 
@@ -12,8 +18,9 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: palette.accent,
-        tabBarInactiveTintColor: palette.muted,
+        tabBarActiveTintColor: accent,
+        tabBarInactiveTintColor: muted,
+        tabBarStyle: { backgroundColor: surface, borderTopColor: border },
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Browse" }} />

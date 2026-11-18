@@ -1,6 +1,7 @@
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
+import { Alert, Typography } from "heroui-native";
 import { useState } from "react";
 import {
   Image,
@@ -8,8 +9,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { createListing as createListingApi, uploadPhoto } from "@/api";
@@ -19,7 +18,6 @@ import { Hero } from "@/components/hero";
 import { TextField } from "@/components/text-field";
 import { categories, ListingKind, zones } from "@/domain";
 import { useData } from "@/providers/data";
-import { palette, radius, spacing } from "@/theme";
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -89,28 +87,30 @@ export default function ReportScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.screen}
+      className="flex-1 bg-background"
     >
       <ScrollView
+        contentContainerClassName="gap-4 px-4 pb-12 pt-2"
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
         <Hero
-          eyebrow="NEW REPORT"
+          eyebrow="New report"
           subtitle="Structured details help the matching engine surface useful candidates."
           title="Tell the campus."
         />
 
-        <View style={styles.kindRow}>
+        <View className="flex-row gap-2">
           <Chip label="I lost it" onPress={() => setKind("LOST")} selected={kind === "LOST"} />
           <Chip label="I found it" onPress={() => setKind("FOUND")} selected={kind === "FOUND"} />
         </View>
 
-        <View style={styles.group}>
-          <Text style={styles.groupLabel}>Category</Text>
+        <View className="gap-2">
+          <Typography weight="semibold" type="body-sm">
+            Category
+          </Typography>
           <ScrollView
-            contentContainerStyle={styles.chips}
+            contentContainerClassName="gap-2 pr-4"
             horizontal
             showsHorizontalScrollIndicator={false}
           >
@@ -125,15 +125,22 @@ export default function ReportScreen() {
           </ScrollView>
         </View>
 
-        <View style={styles.group}>
-          <Text style={styles.groupLabel}>Campus zone</Text>
+        <View className="gap-2">
+          <Typography weight="semibold" type="body-sm">
+            Campus zone
+          </Typography>
           <ScrollView
-            contentContainerStyle={styles.chips}
+            contentContainerClassName="gap-2 pr-4"
             horizontal
             showsHorizontalScrollIndicator={false}
           >
             {zones.map((value) => (
-              <Chip key={value} label={value} onPress={() => setZone(value)} selected={zone === value} />
+              <Chip
+                key={value}
+                label={value}
+                onPress={() => setZone(value)}
+                selected={zone === value}
+              />
             ))}
           </ScrollView>
         </View>
@@ -167,10 +174,14 @@ export default function ReportScreen() {
           value={privateDetail}
         />
 
-        <View style={styles.group}>
-          <Text style={styles.groupLabel}>Photo</Text>
-          {photoUri ? <Image source={{ uri: photoUri }} style={styles.preview} /> : null}
-          <View style={styles.photoActions}>
+        <View className="gap-2">
+          <Typography weight="semibold" type="body-sm">
+            Photo
+          </Typography>
+          {photoUri ? (
+            <Image className="h-48 w-full rounded-2xl bg-surface-secondary" source={{ uri: photoUri }} />
+          ) : null}
+          <View className="flex-row flex-wrap gap-2">
             <Button
               label={photoUri ? "Retake photo" : "Take photo"}
               onPress={() => void pickPhoto("camera")}
@@ -184,15 +195,20 @@ export default function ReportScreen() {
           </View>
           {photoUri ? (
             <Pressable accessibilityRole="button" onPress={() => setPhotoUri(undefined)}>
-              <Text style={styles.removePhoto}>Remove photo</Text>
+              <Typography className="py-1 text-danger" weight="semibold" type="body-sm">
+                Remove photo
+              </Typography>
             </Pressable>
           ) : null}
         </View>
 
         {error ? (
-          <Text selectable style={styles.error}>
-            {error}
-          </Text>
+          <Alert status="danger">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>{error}</Alert.Title>
+            </Alert.Content>
+          </Alert>
         ) : null}
 
         <Button
@@ -204,31 +220,3 @@ export default function ReportScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { backgroundColor: palette.background, flex: 1 },
-  content: {
-    gap: spacing.md,
-    paddingBottom: spacing.xxl,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-  },
-  kindRow: { flexDirection: "row", gap: spacing.sm },
-  group: { gap: spacing.sm },
-  groupLabel: { color: palette.ink, fontSize: 14, fontWeight: "700" },
-  chips: { flexDirection: "row", gap: spacing.sm, paddingRight: spacing.md },
-  preview: {
-    backgroundColor: palette.surfaceMuted,
-    borderRadius: radius.md,
-    height: 180,
-    width: "100%",
-  },
-  photoActions: { flexDirection: "row", gap: spacing.sm, flexWrap: "wrap" },
-  removePhoto: {
-    color: palette.danger,
-    fontSize: 13,
-    fontWeight: "700",
-    paddingVertical: spacing.xs,
-  },
-  error: { color: palette.danger, fontSize: 14, lineHeight: 20 },
-});

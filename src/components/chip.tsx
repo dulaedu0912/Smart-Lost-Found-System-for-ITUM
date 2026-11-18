@@ -1,6 +1,5 @@
 import * as Haptics from "expo-haptics";
-import { Pressable, StyleSheet, Text } from "react-native";
-import { palette, radius, spacing } from "@/theme";
+import { Chip as HeroChip } from "heroui-native";
 
 export function Chip({
   label,
@@ -12,35 +11,17 @@ export function Chip({
   onPress: () => void;
 }) {
   return (
-    <Pressable
-      accessibilityRole="button"
+    <HeroChip
       accessibilityState={{ selected }}
+      color={selected ? "accent" : "default"}
       onPress={() => {
         void Haptics.selectionAsync();
         onPress();
       }}
-      style={({ pressed }) => [
-        styles.chip,
-        selected && styles.selected,
-        pressed && !selected && styles.pressed,
-      ]}
+      size="md"
+      variant={selected ? "primary" : "secondary"}
     >
-      <Text style={[styles.label, selected && styles.selectedLabel]}>{label}</Text>
-    </Pressable>
+      <HeroChip.Label>{label}</HeroChip.Label>
+    </HeroChip>
   );
 }
-
-const styles = StyleSheet.create({
-  chip: {
-    backgroundColor: palette.surface,
-    borderColor: palette.border,
-    borderRadius: radius.full,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 1,
-  },
-  selected: { backgroundColor: palette.accent, borderColor: palette.accent },
-  pressed: { backgroundColor: palette.surfaceMuted },
-  label: { color: palette.body, fontSize: 13, fontWeight: "700" },
-  selectedLabel: { color: palette.white },
-});
