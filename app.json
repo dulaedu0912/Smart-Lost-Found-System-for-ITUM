@@ -1,15 +1,17 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Smart Campus Lost & Found",
+    "slug": "smart-campus-lost-found",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "lk.mrt.itum.smartcampuslostfound"
     },
     "android": {
+      "package": "lk.mrt.itum.smartcampuslostfound",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -20,6 +22,16 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Smart Campus to attach a photo to a lost-and-found report.",
+          "cameraPermission": "Allow Smart Campus to photograph a lost-and-found item."
+        }
+      ]
+    ]
   }
 }
