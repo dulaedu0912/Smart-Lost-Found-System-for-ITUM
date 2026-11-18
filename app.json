@@ -3,6 +3,7 @@
     "name": "Smart Campus Lost & Found",
     "slug": "smart-campus-lost-found",
     "version": "1.0.0",
+    "scheme": "smartcampus",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -12,6 +13,7 @@
     },
     "android": {
       "package": "lk.mrt.itum.smartcampuslostfound",
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -24,6 +26,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "expo-router",
       "expo-secure-store",
       [
         "expo-image-picker",

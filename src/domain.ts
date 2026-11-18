@@ -13,6 +13,7 @@ export type Listing = {
   status: ListingStatus;
   ownerName?: string;
   ownerId?: string;
+  photoUrl?: string;
 };
 
 export type Match = {
