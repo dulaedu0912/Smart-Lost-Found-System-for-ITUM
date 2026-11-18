@@ -69,7 +69,7 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       className="flex-1 bg-background"
     >
       <View
@@ -148,7 +148,7 @@ export default function LoginScreen() {
             keyboardType="email-address"
             label="University email"
             onChangeText={setEmail}
-            placeholder="name@itum.mrt.ac.lk"
+            placeholder="studentID@itum.mrt.ac.lk"
             value={email}
           />
           <TextField

@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "lk.mrt.itum.smartcampuslostfound",
-      "softwareKeyboardLayoutMode": "resize",
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#F8F5F0",
         "foregroundImage": "./assets/android-icon-foreground.png",
