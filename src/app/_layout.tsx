@@ -58,9 +58,29 @@ function RootNavigator() {
           headerTitleStyle: { color: foreground, fontWeight: "600" },
         }}
       >
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="listing/[id]" options={{ title: "Report" }} />
+        <Stack.Screen
+          name="(auth)"
+          options={{
+            animation: "fade",
+            animationDuration: 180,
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            animation: "fade",
+            animationDuration: 180,
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="listing/[id]"
+          options={{
+            animation: "slide_from_right",
+            title: "Report",
+          }}
+        />
       </Stack>
     </ThemeProvider>
   );
