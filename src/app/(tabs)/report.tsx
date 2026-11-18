@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import { Alert, Typography } from "heroui-native";
+import { Alert, Card, Typography } from "heroui-native";
 import { useState } from "react";
 import {
   Image,
@@ -14,7 +14,6 @@ import {
 import { createListing as createListingApi, uploadPhoto } from "@/api";
 import { Button } from "@/components/button";
 import { Chip } from "@/components/chip";
-import { Hero } from "@/components/hero";
 import { TextField } from "@/components/text-field";
 import { categories, ListingKind, zones } from "@/domain";
 import { useData } from "@/providers/data";
@@ -90,98 +89,114 @@ export default function ReportScreen() {
       className="flex-1 bg-background"
     >
       <ScrollView
-        contentContainerClassName="gap-4 px-4 pb-12 pt-2"
+        contentContainerClassName="gap-5 px-5 pb-12 pt-3"
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
       >
-        <Hero
-          eyebrow="New report"
-          subtitle="Structured details help the matching engine surface useful candidates."
-          title="Tell the campus."
-        />
-
-        <View className="flex-row gap-2">
-          <Chip label="I lost it" onPress={() => setKind("LOST")} selected={kind === "LOST"} />
-          <Chip label="I found it" onPress={() => setKind("FOUND")} selected={kind === "FOUND"} />
+        <View className="gap-1">
+          <Typography className="uppercase tracking-widest text-accent" type="body-xs" weight="bold">
+            New report
+          </Typography>
+          <Typography type="h1" weight="bold">
+            Report an item
+          </Typography>
+          <Typography color="muted" type="body">
+            Add the key details so matching stays accurate.
+          </Typography>
         </View>
 
-        <View className="gap-2">
-          <Typography weight="semibold" type="body-sm">
-            Category
-          </Typography>
-          <ScrollView
-            contentContainerClassName="gap-2 pr-4"
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          >
-            {categories.map((value) => (
-              <Chip
-                key={value}
-                label={value}
-                onPress={() => setCategory(value)}
-                selected={category === value}
-              />
-            ))}
-          </ScrollView>
-        </View>
+        <Card className="gap-4 rounded-2xl p-4">
+          <View className="gap-1">
+            <Typography type="h6" weight="bold">1. Report type</Typography>
+            <Typography color="muted" type="body-xs">Choose what happened to the item.</Typography>
+          </View>
+          <View className="flex-row gap-2">
+            <Chip label="I lost it" onPress={() => setKind("LOST")} selected={kind === "LOST"} />
+            <Chip label="I found it" onPress={() => setKind("FOUND")} selected={kind === "FOUND"} />
+          </View>
 
-        <View className="gap-2">
-          <Typography weight="semibold" type="body-sm">
-            Campus zone
-          </Typography>
-          <ScrollView
-            contentContainerClassName="gap-2 pr-4"
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          >
-            {zones.map((value) => (
-              <Chip
-                key={value}
-                label={value}
-                onPress={() => setZone(value)}
-                selected={zone === value}
-              />
-            ))}
-          </ScrollView>
-        </View>
+          <View className="gap-2 border-t border-border pt-4">
+            <Typography weight="semibold" type="body-sm">Category</Typography>
+            <ScrollView
+              contentContainerClassName="gap-2 pr-4"
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {categories.map((value) => (
+                <Chip
+                  key={value}
+                  label={value}
+                  onPress={() => setCategory(value)}
+                  selected={category === value}
+                />
+              ))}
+            </ScrollView>
+          </View>
 
-        <TextField
-          label="Short title"
-          onChangeText={setTitle}
-          placeholder="e.g. Black Casio calculator"
-          value={title}
-        />
-        <TextField
-          label="Colour"
-          onChangeText={setColour}
-          placeholder="e.g. Black"
-          value={colour}
-        />
-        <TextField
-          hint="Add brand, marks, stickers, or other visible details."
-          label="Description"
-          multiline
-          onChangeText={setDescription}
-          placeholder="What does the item look like?"
-          value={description}
-        />
-        <TextField
-          hint="Hidden from other users. Required before a claim is finalised."
-          label="Private identifying detail"
-          onChangeText={setPrivateDetail}
-          placeholder="A detail only the genuine owner should know"
-          secureTextEntry
-          value={privateDetail}
-        />
+          <View className="gap-2">
+            <Typography weight="semibold" type="body-sm">Campus zone</Typography>
+            <ScrollView
+              contentContainerClassName="gap-2 pr-4"
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {zones.map((value) => (
+                <Chip
+                  key={value}
+                  label={value}
+                  onPress={() => setZone(value)}
+                  selected={zone === value}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        </Card>
 
-        <View className="gap-2">
-          <Typography weight="semibold" type="body-sm">
-            Photo
-          </Typography>
+        <Card className="gap-4 rounded-2xl p-4">
+          <View className="gap-1">
+            <Typography type="h6" weight="bold">2. Item details</Typography>
+            <Typography color="muted" type="body-xs">Keep this brief, specific and useful.</Typography>
+          </View>
+          <TextField
+            label="Short title"
+            onChangeText={setTitle}
+            placeholder="e.g. Black Casio calculator"
+            value={title}
+          />
+          <TextField
+            label="Colour"
+            onChangeText={setColour}
+            placeholder="e.g. Black"
+            value={colour}
+          />
+          <TextField
+            hint="Include the brand, marks, stickers or visible damage."
+            label="Description"
+            multiline
+            onChangeText={setDescription}
+            placeholder="What does the item look like?"
+            value={description}
+          />
+        </Card>
+
+        <Card className="gap-4 rounded-2xl p-4">
+          <View className="gap-1">
+            <Typography type="h6" weight="bold">3. Photo and verification</Typography>
+            <Typography color="muted" type="body-xs">Optional photo; private detail is for ownership checks.</Typography>
+          </View>
+
           {photoUri ? (
-            <Image className="h-48 w-full rounded-2xl bg-surface-secondary" source={{ uri: photoUri }} />
+            <View className="gap-3">
+              <Image className="h-48 w-full rounded-xl bg-surface-secondary" source={{ uri: photoUri }} />
+              <Pressable accessibilityRole="button" onPress={() => setPhotoUri(undefined)}>
+                <Typography align="center" className="py-2 text-danger" weight="semibold" type="body-sm">
+                  Remove photo
+                </Typography>
+              </Pressable>
+            </View>
           ) : null}
-          <View className="flex-row flex-wrap gap-2">
+
+          <View className="gap-2">
             <Button
               label={photoUri ? "Retake photo" : "Take photo"}
               onPress={() => void pickPhoto("camera")}
@@ -193,14 +208,18 @@ export default function ReportScreen() {
               variant="secondary"
             />
           </View>
-          {photoUri ? (
-            <Pressable accessibilityRole="button" onPress={() => setPhotoUri(undefined)}>
-              <Typography className="py-1 text-danger" weight="semibold" type="body-sm">
-                Remove photo
-              </Typography>
-            </Pressable>
-          ) : null}
-        </View>
+
+          <View className="border-t border-border pt-4">
+            <TextField
+              hint="Hidden from other users. Required before a claim is finalised."
+              label="Private identifying detail"
+              onChangeText={setPrivateDetail}
+              placeholder="A detail only the genuine owner should know"
+              secureTextEntry
+              value={privateDetail}
+            />
+          </View>
+        </Card>
 
         {error ? (
           <Alert status="danger">

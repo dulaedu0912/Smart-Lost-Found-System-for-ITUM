@@ -12,6 +12,7 @@ import { TextField } from "@/components/text-field";
 import { formatDate } from "@/format";
 import { useAuth } from "@/providers/auth";
 import { useData } from "@/providers/data";
+import { getReportImageSource } from "@/report-images";
 
 export default function ListingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -37,6 +38,7 @@ export default function ListingScreen() {
   }
 
   const isOwn = listing.ownerId === user?.id;
+  const imageSource = getReportImageSource(listing.photoUrl, listing.category);
 
   const submit = async () => {
     if (!privateDetail.trim()) {
@@ -72,11 +74,11 @@ export default function ListingScreen() {
           {listing.description}
         </Typography>
 
-        {listing.photoUrl ? (
+        {imageSource ? (
           <Image
             className="h-56 w-full rounded-3xl bg-surface-secondary"
             resizeMode="cover"
-            source={{ uri: listing.photoUrl }}
+            source={imageSource}
           />
         ) : null}
 

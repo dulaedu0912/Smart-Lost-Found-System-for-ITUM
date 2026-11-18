@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { Image, StyleSheet, useWindowDimensions, View } from "react-native";
 import { useThemeColor } from "heroui-native";
 import Animated, {
-  runOnJS,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -60,65 +59,63 @@ export default function LoadingScreen({ onAnimationComplete }) {
       badgeOpacity.value = 1;
       badgeTranslateY.value = 0;
       dividerProgress.value = 1;
-      progress.value = withTiming(1, { duration: 50 }, (finished) => {
-        if (finished) runOnJS(complete)();
-      });
-      return;
+      progress.value = withTiming(1, { duration: 50 });
+    } else {
+      logoOpacity.value = withTiming(1, { duration: 500 });
+      logoScale.value = withSequence(
+        withSpring(1, {
+          damping: 14,
+          stiffness: 90,
+          mass: 1,
+          overshootClamping: false,
+        }),
+        withDelay(600, withTiming(0.82, { duration: 900 })),
+      );
+      logoTranslateY.value = withDelay(
+        1300,
+        withTiming(-55, { duration: 900 }),
+      );
+
+      dividerProgress.value = withDelay(
+        1300,
+        withTiming(1, { duration: 900 }),
+      );
+
+      universityOpacity.value = withDelay(
+        1700,
+        withTiming(1, { duration: 850 }),
+      );
+      universityTranslateY.value = withDelay(
+        1700,
+        withTiming(0, { duration: 850 }),
+      );
+
+      appNameOpacity.value = withDelay(
+        1900,
+        withTiming(1, { duration: 800 }),
+      );
+      appNameTranslateY.value = withDelay(
+        1900,
+        withTiming(0, { duration: 800 }),
+      );
+
+      badgeOpacity.value = withDelay(
+        2100,
+        withTiming(1, { duration: 700 }),
+      );
+      badgeTranslateY.value = withDelay(
+        2100,
+        withTiming(0, { duration: 700 }),
+      );
+
+      progress.value = withDelay(
+        2150,
+        withTiming(1, { duration: 1900 }),
+      );
     }
 
-    logoOpacity.value = withTiming(1, { duration: 500 });
-    logoScale.value = withSequence(
-      withSpring(1, {
-        damping: 14,
-        stiffness: 90,
-        mass: 1,
-        overshootClamping: false,
-      }),
-      withDelay(600, withTiming(0.65, { duration: 900 })),
-    );
-    logoTranslateY.value = withDelay(
-      1300,
-      withTiming(-55, { duration: 900 }),
-    );
-
-    dividerProgress.value = withDelay(
-      1300,
-      withTiming(1, { duration: 900 }),
-    );
-
-    universityOpacity.value = withDelay(
-      1700,
-      withTiming(1, { duration: 850 }),
-    );
-    universityTranslateY.value = withDelay(
-      1700,
-      withTiming(0, { duration: 850 }),
-    );
-
-    appNameOpacity.value = withDelay(
-      1900,
-      withTiming(1, { duration: 800 }),
-    );
-    appNameTranslateY.value = withDelay(
-      1900,
-      withTiming(0, { duration: 800 }),
-    );
-
-    badgeOpacity.value = withDelay(
-      2100,
-      withTiming(1, { duration: 700 }),
-    );
-    badgeTranslateY.value = withDelay(
-      2100,
-      withTiming(0, { duration: 700 }),
-    );
-
-    progress.value = withDelay(
-      2150,
-      withTiming(1, { duration: 1900 }, (finished) => {
-        if (finished) runOnJS(complete)();
-      }),
-    );
+    const timer = setTimeout(complete, reduceMotion ? 900 : 4900);
+    return () => clearTimeout(timer);
   }, [
     reduceMotion,
     appNameOpacity,
@@ -187,7 +184,7 @@ export default function LoadingScreen({ onAnimationComplete }) {
               fill="none"
               stroke={accent}
               strokeWidth="1"
-              opacity="0.28"
+              opacity="0.1"
             />
             <Circle
               cx="112"
@@ -196,7 +193,7 @@ export default function LoadingScreen({ onAnimationComplete }) {
               fill="none"
               stroke={accent}
               strokeWidth="0.75"
-              opacity="0.12"
+              opacity="0.05"
             />
           </Svg>
           <Image
