@@ -2,7 +2,13 @@ import * as Haptics from "expo-haptics";
 import { Redirect } from "expo-router";
 import { Alert, Typography } from "heroui-native";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import {
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { ApiError, login, register } from "@/api";
 import { Button } from "@/components/button";
 import { Chip } from "@/components/chip";
@@ -13,6 +19,7 @@ type Mode = "LOGIN" | "REGISTER";
 
 export default function LoginScreen() {
   const { user, setUser } = useAuth();
+  const { height } = useWindowDimensions();
   const [mode, setMode] = useState<Mode>("LOGIN");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -62,32 +69,50 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1 bg-background"
     >
-      <ScrollView
-        contentContainerClassName="flex-grow justify-center gap-4 p-6"
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
+      <View
+        className="flex-1 justify-center px-6"
+        style={{ paddingVertical: height < 700 ? 16 : 24 }}
       >
-        <View className="mb-2 size-14 items-center justify-center rounded-2xl bg-accent">
-          <Typography className="text-accent-foreground" type="h5" weight="bold">
-            SC
+        <View
+          className="mb-5 flex-row items-center gap-3"
+          style={{ maxWidth: 520 }}
+        >
+          <View className="size-16 items-center justify-center rounded-2xl border border-border bg-surface">
+            <Image
+              accessibilityLabel="University of Moratuwa emblem"
+              resizeMode="contain"
+              source={require("../../../assets/uom-logo.png")}
+              style={{ height: 52, width: 52 }}
+            />
+          </View>
+          <View className="flex-1">
+            <Typography type="body-xs" weight="bold">
+              UNIVERSITY OF MORATUWA
+            </Typography>
+            <Typography color="muted" type="body-xs">
+              Institute of Technology
+            </Typography>
+          </View>
+        </View>
+
+        <View className="gap-2">
+          <Typography className="uppercase tracking-widest text-accent" type="body-xs" weight="bold">
+            Lost & Found System
+          </Typography>
+          <Typography type="h1" weight="bold">
+            {mode === "LOGIN" ? "Welcome back" : "Create your account"}
+          </Typography>
+          <Typography color="muted" type="body">
+            {mode === "LOGIN"
+              ? "Sign in to report lost items and follow matches."
+              : "Use your university email to join Smart Campus."}
           </Typography>
         </View>
-        <Typography className="uppercase tracking-widest text-accent" type="body-xs" weight="bold">
-          Smart campus
-        </Typography>
-        <Typography type="h1" weight="bold">
-          {mode === "LOGIN" ? "Welcome back." : "Join the campus."}
-        </Typography>
-        <Typography color="muted" type="body">
-          {mode === "LOGIN"
-            ? "Sign in to report lost items, follow matches, and claim what is yours."
-            : "Create an account with your university email to start reporting."}
-        </Typography>
 
-        <View className="my-2 flex-row gap-2">
+        <View className="my-4 flex-row gap-2">
           <Chip
             label="Sign in"
             onPress={() => {
@@ -106,52 +131,55 @@ export default function LoginScreen() {
           />
         </View>
 
-        {mode === "REGISTER" ? (
+        <View className="gap-3">
+          {mode === "REGISTER" ? (
+            <TextField
+              autoCapitalize="words"
+              label="Display name"
+              onChangeText={setDisplayName}
+              placeholder="Your name"
+              value={displayName}
+            />
+          ) : null}
+
           <TextField
-            autoCapitalize="words"
-            label="Display name"
-            onChangeText={setDisplayName}
-            placeholder="Your name"
-            value={displayName}
+            autoCapitalize="none"
+            autoComplete="email"
+            keyboardType="email-address"
+            label="University email"
+            onChangeText={setEmail}
+            placeholder="name@itum.mrt.ac.lk"
+            value={email}
           />
-        ) : null}
+          <TextField
+            autoCapitalize="none"
+            label="Password"
+            onChangeText={setPassword}
+            placeholder="At least 8 characters"
+            returnKeyType="done"
+            secureTextEntry
+            value={password}
+          />
 
-        <TextField
-          autoCapitalize="none"
-          autoComplete="email"
-          keyboardType="email-address"
-          label="University email"
-          onChangeText={setEmail}
-          placeholder="name@itum.mrt.ac.lk"
-          value={email}
-        />
-        <TextField
-          autoCapitalize="none"
-          label="Password"
-          onChangeText={setPassword}
-          placeholder="At least 8 characters"
-          secureTextEntry
-          value={password}
-        />
+          {error ? (
+            <Alert status="danger">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Title>{error}</Alert.Title>
+              </Alert.Content>
+            </Alert>
+          ) : null}
 
-        {error ? (
-          <Alert status="danger">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>{error}</Alert.Title>
-            </Alert.Content>
-          </Alert>
-        ) : null}
-
-        <Button
-          disabled={saving}
-          label={saving ? "Connecting…" : mode === "LOGIN" ? "Sign in" : "Create account"}
-          onPress={submit}
-        />
-        <Typography align="center" className="mt-2" color="muted" type="body-xs">
-          Lost &amp; found for the Institute of Technology, University of Moratuwa.
+          <Button
+            disabled={saving}
+            label={saving ? "Connecting…" : mode === "LOGIN" ? "Sign in" : "Create account"}
+            onPress={submit}
+          />
+        </View>
+        <Typography align="center" className="mt-3" color="muted" type="body-xs">
+          Lost &amp; found support for ITUM students and staff
         </Typography>
-      </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 }

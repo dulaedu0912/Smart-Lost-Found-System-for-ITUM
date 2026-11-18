@@ -2,12 +2,13 @@ import "../../global.css";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { HeroUINativeProvider, Spinner, useThemeColor } from "heroui-native";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useUniwind } from "uniwind";
 import { AuthProvider, useAuth } from "@/providers/auth";
 import { DataProvider } from "@/providers/data";
+import LoadingScreen from "@/components/LoadingScreen";
 
 function RootNavigator() {
   const { restoring } = useAuth();
@@ -66,12 +67,19 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
+  const [isLoading, setIsLoading] = useState(true);
+  const finishLoading = useCallback(() => setIsLoading(false), []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <HeroUINativeProvider>
         <AuthProvider>
           <DataProvider>
-            <RootNavigator />
+            {isLoading ? (
+              <LoadingScreen onAnimationComplete={finishLoading} />
+            ) : (
+              <RootNavigator />
+            )}
           </DataProvider>
         </AuthProvider>
       </HeroUINativeProvider>
