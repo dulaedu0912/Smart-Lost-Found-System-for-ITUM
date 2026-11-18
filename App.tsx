@@ -26,13 +26,14 @@ import {
   Listing,
   ListingKind,
   Match,
-  seedListings,
   zones,
 } from "./src/domain";
 import {
   ApiError,
   AuthUser,
+  claimListing,
   createListing as createListingApi,
+  getStoredUser,
   listListings,
   listNotifications,
   login,
@@ -42,7 +43,7 @@ import {
 } from "./src/api";
 import { palette, radius, spacing } from "./src/theme";
 
-type Screen = "feed" | "report" | "alerts" | "profile";
+type Screen = "feed" | "report" | "alerts" | "profile" | "detail";
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -176,11 +177,13 @@ function ListingRow({
 function FeedScreen({
   listings,
   onCreate,
+  onSelect,
   errorMessage,
   loading,
 }: {
   listings: Listing[];
   onCreate: () => void;
+  onSelect: (listing: Listing) => void;
   errorMessage?: string;
   loading?: boolean;
 }) {
@@ -218,7 +221,7 @@ function FeedScreen({
           <Text style={styles.sectionTitle}>Recent reports</Text>
         </View>
       }
-      renderItem={({ item }) => <ListingRow listing={item} onPress={() => undefined} />}
+      renderItem={({ item }) => <ListingRow listing={item} onPress={() => onSelect(item)} />}
       ListEmptyComponent={
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>No reports found</Text>
@@ -365,9 +368,11 @@ function ReportScreen({
 function AlertsScreen({
   listings,
   matches,
+  onSelect,
 }: {
   listings: Listing[];
   matches: Match[];
+  onSelect: (listing: Listing) => void;
 }) {
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.formContent}>
@@ -385,19 +390,96 @@ function AlertsScreen({
         matches.map((match) => {
           const candidate = listings.find((listing) => listing.id === match.candidateId);
           return (
-            <GlassSurface key={match.id} style={styles.matchCard}>
-              <View style={styles.rowBetween}>
-                <Text style={styles.matchScore}>{Math.round(match.score * 100)}% match</Text>
-                <Text style={styles.captionText}>NEW</Text>
-              </View>
-              <Text style={styles.listingTitle}>{candidate?.title ?? "Candidate report"}</Text>
-              <Text style={styles.mutedText}>{match.summary}</Text>
-              <Text style={styles.captionText}>
-                Review the item in person before sharing any private details.
-              </Text>
-            </GlassSurface>
+            <Pressable
+              key={match.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${candidate?.title ?? "candidate report"}`}
+              onPress={() => (candidate ? onSelect(candidate) : undefined)}
+            >
+              <GlassSurface style={styles.matchCard}>
+                <View style={styles.rowBetween}>
+                  <Text style={styles.matchScore}>{Math.round(match.score * 100)}% match</Text>
+                  <Text style={styles.captionText}>NEW</Text>
+                </View>
+                <Text style={styles.listingTitle}>{candidate?.title ?? "Candidate report"}</Text>
+                <Text style={styles.mutedText}>{match.summary}</Text>
+                <Text style={styles.captionText}>
+                  Review the item in person before sharing any private details.
+                </Text>
+              </GlassSurface>
+            </Pressable>
           );
         })
+      )}
+    </ScrollView>
+  );
+}
+
+function ListingDetailScreen({
+  listing,
+  isOwn,
+  onClaim,
+  onBack,
+}: {
+  listing: Listing;
+  isOwn: boolean;
+  onClaim: (privateDetail: string) => Promise<void>;
+  onBack: () => void;
+}) {
+  const [privateDetail, setPrivateDetail] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    if (!privateDetail.trim()) {
+      setError("Enter the identifying detail to claim this item.");
+      return;
+    }
+    setError("");
+    setSaving(true);
+    try {
+      await onClaim(privateDetail.trim());
+      setPrivateDetail("");
+    } catch (claimError) {
+      setError(claimError instanceof Error ? claimError.message : "Could not claim this item.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.formContent}>
+      <Pressable accessibilityRole="button" onPress={onBack}>
+        <Text style={styles.backLink}>Back to reports</Text>
+      </Pressable>
+      <Text style={styles.eyebrow}>{listing.kind === "LOST" ? "LOST REPORT" : "FOUND REPORT"}</Text>
+      <Text style={styles.pageTitle}>{listing.title}</Text>
+      <GlassSurface style={styles.profileCard}>
+        <Text style={styles.mutedText}>{listing.category} · {listing.zone}</Text>
+        <Text style={styles.mutedText}>{listing.date} · {listing.colour}</Text>
+        <Text style={styles.pageSubtitle}>{listing.description}</Text>
+        <Text style={styles.captionText}>Reported by {listing.ownerName ?? "a campus user"}</Text>
+      </GlassSurface>
+      {listing.status !== "ACTIVE" ? (
+        <Text style={styles.mutedText}>This item is {listing.status.toLowerCase()}.</Text>
+      ) : isOwn ? (
+        <Text style={styles.mutedText}>This is your report, so you cannot claim it.</Text>
+      ) : (
+        <>
+          <Text style={styles.fieldLabel}>Private identifying detail</Text>
+          <Text style={styles.helperText}>
+            Answer the detail recorded by the person who reported this item. You get three attempts.
+          </Text>
+          <TextInput
+            value={privateDetail}
+            onChangeText={setPrivateDetail}
+            placeholder="Only the genuine owner should know this"
+            secureTextEntry
+            style={styles.input}
+          />
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          <Button label={saving ? "Verifying…" : "Claim this item"} onPress={submit} disabled={saving} />
+        </>
       )}
     </ScrollView>
   );
@@ -411,9 +493,9 @@ function ProfileScreen({ listings, user, onSignOut }: { listings: Listing[]; use
       <Text selectable style={styles.pageSubtitle}>{user.email}</Text>
       <GlassSurface style={styles.profileCard}>
         <Text style={styles.sectionTitle}>My listings</Text>
-        <Text style={styles.mutedText}>{listings.filter((listing) => listing.ownerName === "You").length} active reports</Text>
+        <Text style={styles.mutedText}>{listings.filter((listing) => listing.ownerId === user.id).length} active reports</Text>
         <View style={styles.separator} />
-        {listings.filter((listing) => listing.ownerName === "You").map((listing) => (
+        {listings.filter((listing) => listing.ownerId === user.id).map((listing) => (
           <View key={listing.id} style={styles.rowBetween}>
             <Text style={styles.listingTitle}>{listing.title}</Text>
             <Text style={styles.status}>{listing.status}</Text>
@@ -509,10 +591,25 @@ export default function App() {
   const [authenticated, setAuthenticated] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [screen, setScreen] = useState<Screen>("feed");
-  const [listings, setListings] = useState<Listing[]>(seedListings);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loadingListings, setLoadingListings] = useState(false);
   const [apiError, setApiError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    getStoredUser()
+      .then((stored) => {
+        if (!active || !stored) return;
+        setUser(stored);
+        setAuthenticated(true);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!authenticated) return;
@@ -526,8 +623,18 @@ export default function App() {
           setApiError("");
         }
       })
-      .catch((error: unknown) => {
-        if (active) setApiError(error instanceof Error ? error.message : "Could not load reports.");
+      .catch(async (error: unknown) => {
+        if (!active) return;
+        if (error instanceof ApiError && error.status === 401) {
+          await signOut();
+          if (!active) return;
+          setAuthenticated(false);
+          setUser(null);
+          setListings([]);
+          setMatches([]);
+          return;
+        }
+        setApiError(error instanceof Error ? error.message : "Could not load reports.");
       })
       .finally(() => {
         if (active) setLoadingListings(false);
@@ -536,6 +643,11 @@ export default function App() {
       active = false;
     };
   }, [authenticated]);
+
+  function openListing(listing: Listing) {
+    setSelectedListing(listing);
+    setScreen("detail");
+  }
 
   async function createListing(listing: Listing, privateDetail: string, photoUri?: string) {
     const photoUrl = photoUri ? await uploadPhoto(photoUri) : undefined;
@@ -555,11 +667,27 @@ export default function App() {
     setScreen("feed");
   }
 
+  async function handleClaim(privateDetail: string) {
+    if (!selectedListing) return;
+    await claimListing(selectedListing.id, privateDetail);
+    setListings((current) => current.map((listing) => (
+      listing.id === selectedListing.id ? { ...listing, status: "CLAIMED" } : listing
+    )));
+    setSelectedListing({ ...selectedListing, status: "CLAIMED" });
+    setMatches((current) => current.filter((match) => (
+      match.candidateId !== selectedListing.id && match.listingId !== selectedListing.id
+    )));
+    listListings().then(setListings).catch(() => undefined);
+  }
+
   async function handleSignOut() {
     await signOut();
     setAuthenticated(false);
     setUser(null);
+    setListings([]);
     setMatches([]);
+    setSelectedListing(null);
+    setScreen("feed");
   }
 
   if (!authenticated) {
@@ -575,9 +703,17 @@ export default function App() {
     <View style={styles.app}>
       <StatusBar style="dark" />
       <View style={styles.screen}>
-        {screen === "feed" ? <FeedScreen listings={listings} onCreate={() => setScreen("report")} errorMessage={apiError} loading={loadingListings} /> : null}
+        {screen === "feed" ? <FeedScreen listings={listings} onCreate={() => setScreen("report")} onSelect={openListing} errorMessage={apiError} loading={loadingListings} /> : null}
         {screen === "report" ? <ReportScreen onSubmit={createListing} /> : null}
-        {screen === "alerts" ? <AlertsScreen listings={listings} matches={matches} /> : null}
+        {screen === "alerts" ? <AlertsScreen listings={listings} matches={matches} onSelect={openListing} /> : null}
+        {screen === "detail" && selectedListing ? (
+          <ListingDetailScreen
+            listing={selectedListing}
+            isOwn={selectedListing.ownerId === user?.id}
+            onClaim={handleClaim}
+            onBack={() => setScreen("feed")}
+          />
+        ) : null}
         {screen === "profile" && user ? <ProfileScreen listings={listings} user={user} onSignOut={handleSignOut} /> : null}
       </View>
       <View style={styles.tabBar}>
@@ -626,6 +762,7 @@ const styles = StyleSheet.create({
   authScreen: { flex: 1, backgroundColor: palette.background },
   authContent: { flexGrow: 1, justifyContent: "center", padding: spacing.lg, gap: spacing.md },
   authSwitch: { color: palette.accent, fontSize: 14, fontWeight: "700", paddingVertical: spacing.sm, textAlign: "center" },
+  backLink: { color: palette.accent, fontSize: 14, fontWeight: "700", paddingVertical: spacing.sm },
   listContent: { padding: spacing.md, paddingBottom: spacing.xl, gap: spacing.sm },
   formContent: { padding: spacing.md, paddingBottom: spacing.xl, gap: spacing.md },
   headerBlock: { gap: spacing.sm, paddingTop: spacing.md, paddingBottom: spacing.md },

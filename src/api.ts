@@ -4,6 +4,7 @@ import { Listing, ListingKind, Match } from "./domain";
 
 const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:43127").replace(/\/$/, "");
 const TOKEN_KEY = "smart-campus.access-token";
+const USER_KEY = "smart-campus.user";
 let webAccessToken: string | null = null;
 const cloudName = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME;
 const uploadPreset = process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
@@ -20,6 +21,7 @@ export class ApiError extends Error {
     message: string,
     public readonly status: number,
     public readonly code?: string,
+    public readonly details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = "ApiError";
@@ -50,9 +52,33 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       body?.error?.message ?? "The request could not be completed.",
       response.status,
       body?.error?.code,
+      body?.error?.details,
     );
   }
   return body as T;
+}
+
+async function persistSession(user: AuthUser): Promise<void> {
+  if (Platform.OS === "web") {
+    webAccessToken = user.accessToken;
+    return;
+  }
+  await Promise.all([
+    SecureStore.setItemAsync(TOKEN_KEY, user.accessToken),
+    SecureStore.setItemAsync(USER_KEY, JSON.stringify(user)),
+  ]);
+}
+
+export async function getStoredUser(): Promise<AuthUser | null> {
+  if (Platform.OS === "web") return null;
+  const stored = await SecureStore.getItemAsync(USER_KEY);
+  if (!stored) return null;
+  try {
+    const user = JSON.parse(stored) as AuthUser;
+    return user.accessToken ? user : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function register(input: {
@@ -64,11 +90,7 @@ export async function register(input: {
     method: "POST",
     body: JSON.stringify(input),
   });
-  if (Platform.OS === "web") {
-    webAccessToken = result.data.accessToken;
-  } else {
-    await SecureStore.setItemAsync(TOKEN_KEY, result.data.accessToken);
-  }
+  await persistSession(result.data);
   return result.data;
 }
 
@@ -77,11 +99,7 @@ export async function login(input: { email: string; password: string }): Promise
     method: "POST",
     body: JSON.stringify(input),
   });
-  if (Platform.OS === "web") {
-    webAccessToken = result.data.accessToken;
-  } else {
-    await SecureStore.setItemAsync(TOKEN_KEY, result.data.accessToken);
-  }
+  await persistSession(result.data);
   return result.data;
 }
 
@@ -90,6 +108,7 @@ export async function signOut(): Promise<void> {
     webAccessToken = null;
   } else {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await SecureStore.deleteItemAsync(USER_KEY);
   }
 }
 
@@ -113,7 +132,14 @@ export async function createListing(input: {
     method: "POST",
     body: JSON.stringify(input),
   });
-  return { listing: { ...result.data, ownerName: "You" }, matches: result.matches };
+  return { listing: result.data, matches: result.matches };
+}
+
+export async function claimListing(listingId: string, privateDetail: string): Promise<void> {
+  await request(`/api/listings/${encodeURIComponent(listingId)}/claims`, {
+    method: "POST",
+    body: JSON.stringify({ privateDetail }),
+  });
 }
 
 export async function uploadPhoto(uri: string): Promise<string> {
@@ -136,5 +162,6 @@ export async function uploadPhoto(uri: string): Promise<string> {
 
 export async function listNotifications(): Promise<Match[]> {
   const result = await request<{ data: Match[] }>("/api/notifications");
-  return result.data;
+  // shortcut: claim notifications are hidden here because the alerts tab only renders matches, add a claims inbox when needed
+  return result.data.filter((notification) => notification.candidateId);
 }
