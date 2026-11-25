@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model categories {
+  id          String     @id
+  name        String     @unique
+  description String?
+  icon        String?
+  createdAt   DateTime   @default(now())
+  listings    listings[]
+}
+
+model claims {
+  id             String      @id
+  matchId        String      @unique
+  claimantId     String
+  listingId      String
+  status         ClaimStatus @default(PENDING)
+  verifiedDetail String?
+  createdAt      DateTime    @default(now())
+  resolvedAt     DateTime?
+  users          users       @relation(fields: [claimantId], references: [id])
+  listings       listings    @relation(fields: [listingId], references: [id])
+  matches        matches     @relation(fields: [matchId], references: [id])
+}
+
+model listings {
+  id                                       String        @id
+  type                                     ListingType
+  title                                    String
+  description                              String
+  color                                    String
+  date                                     DateTime
+  imageUrl                                 String?
+  status                                   ListingStatus @default(ACTIVE)
+  categoryId                               String
+  zoneId                                   String
+  userId                                   String
+  secretDetail                             String?
+  createdAt                                DateTime      @default(now())
+  updatedAt                                DateTime
+  claims                                   claims[]
+  categories                               categories    @relation(fields: [categoryId], references: [id])
+  users                                    users         @relation(fields: [userId], references: [id])
+  zones                                    zones         @relation(fields: [zoneId], references: [id])
+  matches_matches_foundListingIdTolistings matches[]     @relation("matches_foundListingIdTolistings")
+  matches_matches_lostListingIdTolistings  matches[]     @relation("matches_lostListingIdTolistings")
+
+  @@index([categoryId])
+  @@index([createdAt])
+  @@index([type, status])
+  @@index([userId])
+  @@index([zoneId])
+}
+
+model matches {
+  id                                        String      @id
+  lostListingId                             String
+  foundListingId                            String
+  score                                     Float
+  status                                    MatchStatus @default(PENDING)
+  userId                                    String
+  createdAt                                 DateTime    @default(now())
+  updatedAt                                 DateTime
+  claims                                    claims?
+  listings_matches_foundListingIdTolistings listings    @relation("matches_foundListingIdTolistings", fields: [foundListingId], references: [id])
+  listings_matches_lostListingIdTolistings  listings    @relation("matches_lostListingIdTolistings", fields: [lostListingId], references: [id])
+  users                                     users       @relation(fields: [userId], references: [id])
+
+  @@index([foundListingId])
+  @@index([lostListingId])
+  @@index([userId, status])
+}
+
+model notifications {
+  id        String           @id
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  users     users            @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([userId, read])
+}
+
+model users {
+  id            String          @id
+  email         String          @unique
+  passwordHash  String
+  fullName      String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime
+  claims        claims[]
+  listings      listings[]
+  matches       matches[]
+  notifications notifications[]
+}
+
+model zone_adjacencies {
+  id                                       String @id
+  fromZoneId                               String
+  toZoneId                                 String
+  score                                    Float
+  zones_zone_adjacencies_fromZoneIdTozones zones  @relation("zone_adjacencies_fromZoneIdTozones", fields: [fromZoneId], references: [id])
+  zones_zone_adjacencies_toZoneIdTozones   zones  @relation("zone_adjacencies_toZoneIdTozones", fields: [toZoneId], references: [id])
+
+  @@unique([fromZoneId, toZoneId])
+}
+
+model zones {
+  id                                                  String             @id
+  name                                                String             @unique
+  parentId                                            String?
+  createdAt                                           DateTime           @default(now())
+  listings                                            listings[]
+  zone_adjacencies_zone_adjacencies_fromZoneIdTozones zone_adjacencies[] @relation("zone_adjacencies_fromZoneIdTozones")
+  zone_adjacencies_zone_adjacencies_toZoneIdTozones   zone_adjacencies[] @relation("zone_adjacencies_toZoneIdTozones")
+  zones                                               zones?             @relation("zonesTozones", fields: [parentId], references: [id])
+  other_zones                                         zones[]            @relation("zonesTozones")
+}
+
+enum ListingStatus {
+  ACTIVE
+  MATCHED
+  CLAIMED
+  EXPIRED
+}
+
+enum ClaimStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ListingType {
+  LOST
+  FOUND
+}
+
+enum MatchStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum NotificationType {
+  MATCH_FOUND
+  CLAIM_SUBMITTED
+  CLAIM_VERIFIED
+  CLAIM_REJECTED
+}
