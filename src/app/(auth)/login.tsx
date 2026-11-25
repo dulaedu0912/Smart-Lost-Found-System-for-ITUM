@@ -74,12 +74,14 @@ export default function LoginScreen() {
     >
       <View
         className="flex-1 justify-center px-6"
-        style={{ paddingVertical: height < 700 ? 16 : 24 }}
+        style={{
+          alignSelf: "center",
+          maxWidth: 520,
+          paddingVertical: height < 700 ? 16 : 24,
+          width: "100%",
+        }}
       >
-        <View
-          className="mb-5 flex-row items-center gap-3"
-          style={{ maxWidth: 520 }}
-        >
+        <View className="mb-5 flex-row items-center gap-3">
           <View className="size-16 items-center justify-center rounded-2xl border border-border bg-surface">
             <Image
               accessibilityLabel="University of Moratuwa emblem"
@@ -99,8 +101,8 @@ export default function LoginScreen() {
         </View>
 
         <View className="gap-2">
-          <Typography className="uppercase tracking-widest text-accent" type="body-xs" weight="bold">
-            Lost & Found System
+          <Typography className="text-accent" type="body-xs" weight="bold">
+            Lost & found system
           </Typography>
           <Typography type="h1" weight="bold">
             {mode === "LOGIN" ? "Welcome back" : "Create your account"}
@@ -155,6 +157,7 @@ export default function LoginScreen() {
             autoCapitalize="none"
             label="Password"
             onChangeText={setPassword}
+            onSubmitEditing={submit}
             placeholder="At least 8 characters"
             returnKeyType="done"
             secureTextEntry
